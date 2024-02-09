@@ -4,31 +4,33 @@ const caps = require('hypercore/lib/caps')
 const m = require('hypercore/lib/messages')
 const c = require('compact-encoding')
 
-module.exports = {
-  generate (core) {
-    if (core.core.compat) throw new Error('Cannot generate signing requests for compat cores')
+const VERSION = 1
 
-    const version = c.encode(c.uint, 0)
-    const manifest = c.encode(c.buffer, c.encode(m.manifest, core.manifest))
-    const treeHash = c.encode(c.fixed32, core.core.tree.hash())
-    const length = c.encode(c.uint, core.length)
-    const fork = c.encode(c.uint, core.fork)
+const FramedManifest = c.frame(m.manifest)
 
-    return Buffer.concat([version, manifest, treeHash, length, fork])
+const Request = {
+  preencode (state, req) {
+    c.uint.preencode(state, req.version)
+    FramedManifest.preencode(state, req.manifest)
+    c.fixed32.preencode(state, req.treeHash)
+    c.uint.preencode(state, req.length)
+    c.uint.preencode(state, req.fork)
   },
-  decode (req) {
-    const state = { start: 0, end: req.byteLength, buffer: req }
+  encode (state, req) {
+    c.uint.encode(state, req.version)
+    FramedManifest.encode(state, req.manifest)
+    c.fixed32.encode(state, req.treeHash)
+    c.uint.encode(state, req.length)
+    c.uint.encode(state, req.fork)
+  },
+  decode (state) {
     const version = c.uint.decode(state)
+    if (version !== VERSION) throw new Error('Unknown signing request version: ' + version)
 
-    if (version !== 0) throw new Error('Unknown signing request version: ' + version)
-
-    const manifest = c.decode(m.manifest, c.buffer.decode(state))
+    const manifest = FramedManifest.decode(state)
     const treeHash = c.fixed32.decode(state)
     const length = c.uint.decode(state)
     const fork = c.uint.decode(state)
-
-    if (length === 0) throw new Error('Refusing to sign length = 0')
-    if (state.start < state.end) throw new Error('Unparsed padding left in request, bailing')
 
     const key = Verifier.manifestHash(manifest)
     const id = HypercoreID.normalize(key)
@@ -42,6 +44,29 @@ module.exports = {
       length,
       fork
     }
+  }
+}
+
+module.exports = {
+  async generate (core, { length = core.length, fork = core.fork } = {}) {
+    if (core.core.compat) throw new Error('Cannot generate signing requests for compat cores')
+
+    return c.encode(Request, {
+      version: VERSION,
+      manifest: core.manifest,
+      treeHash: await core.treeHash(length),
+      length,
+      fork
+    })
+  },
+  decode (buffer) {
+    const state = { start: 0, end: buffer.byteLength, buffer }
+    const req = Request.decode(state)
+
+    if (req.length === 0) throw new Error('Refusing to sign length = 0')
+    if (state.start < state.end) throw new Error('Unparsed padding left in request, bailing')
+
+    return req
   },
   signable (pub, req) {
     for (const s of req.manifest.signers) {

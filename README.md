@@ -16,7 +16,7 @@ const { generate, decode, signable } = require('hypercore-signing-request')
 
 ## API
 
-#### `requestBuffer = generate(core)`
+#### `requestBuffer = await generate(core, { length = core.length })`
 
 Generate a signing request, returned as a buffer so it can be shared.
 Only works for non-compat cores (ie manifest backed)
