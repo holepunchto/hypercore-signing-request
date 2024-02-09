@@ -6,31 +6,29 @@ const c = require('compact-encoding')
 
 const VERSION = 1
 
-const FramedManifest = c.frame(m.manifest)
-
 const Request = {
   preencode (state, req) {
     c.uint.preencode(state, req.version)
-    FramedManifest.preencode(state, req.manifest)
-    c.fixed32.preencode(state, req.treeHash)
     c.uint.preencode(state, req.length)
     c.uint.preencode(state, req.fork)
+    c.fixed32.preencode(state, req.treeHash)
+    m.manifest.preencode(state, req.manifest)
   },
   encode (state, req) {
     c.uint.encode(state, req.version)
-    FramedManifest.encode(state, req.manifest)
-    c.fixed32.encode(state, req.treeHash)
     c.uint.encode(state, req.length)
     c.uint.encode(state, req.fork)
+    c.fixed32.encode(state, req.treeHash)
+    m.manifest.encode(state, req.manifest)
   },
   decode (state) {
     const version = c.uint.decode(state)
     if (version !== VERSION) throw new Error('Unknown signing request version: ' + version)
 
-    const manifest = FramedManifest.decode(state)
-    const treeHash = c.fixed32.decode(state)
     const length = c.uint.decode(state)
     const fork = c.uint.decode(state)
+    const treeHash = c.fixed32.decode(state)
+    const manifest = m.manifest.decode(state)
 
     const key = Verifier.manifestHash(manifest)
     const id = HypercoreID.normalize(key)
@@ -39,10 +37,10 @@ const Request = {
       version,
       id,
       key,
-      manifest,
-      treeHash,
       length,
-      fork
+      fork,
+      treeHash,
+      manifest
     }
   }
 }
@@ -53,10 +51,10 @@ module.exports = {
 
     return c.encode(Request, {
       version: VERSION,
-      manifest: core.manifest,
-      treeHash: await core.treeHash(length),
       length,
-      fork
+      fork,
+      treeHash: await core.treeHash(length),
+      manifest: core.manifest
     })
   },
   decode (buffer) {
