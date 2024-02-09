@@ -46,18 +46,19 @@ const Request = {
 }
 
 module.exports = {
-  async generate (core, { length = core.length, fork = core.fork } = {}) {
+  async generate (core, { length = core.length, fork = core.fork, manifest = null } = {}) {
     if (!core.opened) await core.ready()
 
-    if (core.core.compat) throw new Error('Cannot generate signing requests for compat cores')
+    if (core.core.compat && !manifest) throw new Error('Cannot generate signing requests for compat cores')
     if (core.fork !== fork) throw new Error('Core should have the same fork')
+    if (!manifest) manifest = core.manifest
 
     return c.encode(Request, {
       version: VERSION,
       length,
       fork,
       treeHash: await core.treeHash(length),
-      manifest: core.manifest
+      manifest
     })
   },
   decode (buffer) {
