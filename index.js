@@ -47,7 +47,10 @@ const Request = {
 
 module.exports = {
   async generate (core, { length = core.length, fork = core.fork } = {}) {
+    if (!core.opened) await core.ready()
+
     if (core.core.compat) throw new Error('Cannot generate signing requests for compat cores')
+    if (cork.fork !== fork) throw new Error('Core should have the same fork')
 
     return c.encode(Request, {
       version: VERSION,
