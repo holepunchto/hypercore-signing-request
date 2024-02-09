@@ -3,6 +3,9 @@
   "version": "3.0.1",
   "description": "Generate shareable signing requests for Hypercore",
   "main": "index.js",
+  "scripts": {
+    "test": "standard && brittle test.js"
+  },
   "files": [
     "./index.js"
   ],
@@ -20,5 +23,10 @@
   "bugs": {
     "url": "https://github.com/holepunchto/hypercore-signing-request/issues"
   },
-  "homepage": "https://github.com/holepunchto/hypercore-signing-request"
+  "homepage": "https://github.com/holepunchto/hypercore-signing-request",
+  "devDependencies": {
+    "brittle": "^3.4.0",
+    "random-access-memory": "^6.2.0",
+    "standard": "^17.1.0"
+  }
 }
