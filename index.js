@@ -71,9 +71,10 @@ module.exports = {
     return req
   },
   signable (pub, req) {
+    const v = req.manifest.version
     for (const s of req.manifest.signers) {
       if (s.publicKey.equals(pub)) {
-        return caps.treeSignable(s.namespace, req.treeHash, req.length, req.fork)
+        return caps.treeSignable(v === 0 ? s.namespace : req.key, req.treeHash, req.length, req.fork)
       }
     }
 
