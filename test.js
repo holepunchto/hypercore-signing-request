@@ -43,5 +43,9 @@ test('Can generate and decode a drive request', async t => {
   t.alike(decoded.treeHash, await drive.core.treeHash(3), 'Correct treeHash')
   t.alike(decoded.manifest, drive.core.manifest, 'Correct manifest')
 
+  t.ok(decoded.blobs)
+  t.is(decoded.blobs.length, drive.blobs.core.length)
+  t.alike(decoded.blobs.treeHash, await drive.blobs.core.treeHash())
+
   await drive.close()
 })
