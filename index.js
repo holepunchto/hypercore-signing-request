@@ -8,6 +8,7 @@ const crypto = require('hypercore-crypto')
 const [BLOBS] = crypto.namespace('hyperdrive', 1)
 
 const VERSION = 1
+const FLAG_DRIVE = 1
 
 const Request = {
   preencode (state, req) {
@@ -17,13 +18,12 @@ const Request = {
     c.fixed32.preencode(state, req.treeHash)
     m.manifest.preencode(state, req.manifest)
 
-    let flags = 0
-    if (req.blobs) flags |= 1
-    c.uint.preencode(state, flags)
+    c.uint.preencode(state, 0) // flags
 
-    if (req.blobs === null) return
-    c.uint.preencode(state, req.blobs.length)
-    c.fixed32.preencode(state, req.blobs.treeHash)
+    if (req.blobs) {
+      c.uint.preencode(state, req.blobs.length)
+      c.fixed32.preencode(state, req.blobs.treeHash)
+    }
   },
   encode (state, req) {
     c.uint.encode(state, req.version)
@@ -33,12 +33,13 @@ const Request = {
     m.manifest.encode(state, req.manifest)
 
     let flags = 0
-    if (req.blobs) flags |= 1
+    if (req.blobs) flags |= FLAG_DRIVE
     c.uint.encode(state, flags)
 
-    if (req.blobs === null) return
-    c.uint.encode(state, req.blobs.length)
-    c.fixed32.encode(state, req.blobs.treeHash)
+    if (req.blobs) {
+      c.uint.encode(state, req.blobs.length)
+      c.fixed32.encode(state, req.blobs.treeHash)
+    }
   },
   decode (state) {
     const version = c.uint.decode(state)
@@ -52,7 +53,18 @@ const Request = {
     const key = Verifier.manifestHash(manifest)
     const id = HypercoreID.normalize(key)
 
-    const request = {
+    const flags = state.start !== state.end ? c.uint.decode(state) : 0
+
+    let blobs = null
+
+    if (flags & FLAG_DRIVE) {
+      blobs = {
+        length: c.uint.decode(state),
+        treeHash: c.fixed32.decode(state)
+      }
+    }
+
+    return {
       version,
       id,
       key,
@@ -60,19 +72,8 @@ const Request = {
       fork,
       treeHash,
       manifest,
-      blobs: null
+      blobs
     }
-
-    const flags = state.start !== state.end ? c.uint.decode(state) : 0
-
-    if (!(flags & 1)) return request
-
-    request.blobs = {
-      length: c.uint.decode(state),
-      treeHash: c.fixed32.decode(state)
-    }
-
-    return request
   }
 }
 
