@@ -42,7 +42,7 @@ const Request = {
   },
   decode (state) {
     const version = c.uint.decode(state)
-    if (version !== VERSION) throw new Error('Unknown signing request version: ' + version)
+    if (version > VERSION) throw new Error('Unknown signing request version: ' + version)
 
     const length = c.uint.decode(state)
     const fork = c.uint.decode(state)
