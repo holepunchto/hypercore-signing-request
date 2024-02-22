@@ -16,7 +16,11 @@ const Request = {
     c.uint.preencode(state, req.fork)
     c.fixed32.preencode(state, req.treeHash)
     m.manifest.preencode(state, req.manifest)
-    c.uint.preencode(state, 0)
+
+    let flags = 0
+    if (req.blobs) flags |= 1
+    c.uint.preencode(state, flags)
+
     if (req.blobs === null) return
     c.uint.preencode(state, req.blobs.length)
     c.fixed32.preencode(state, req.blobs.treeHash)
@@ -27,7 +31,11 @@ const Request = {
     c.uint.encode(state, req.fork)
     c.fixed32.encode(state, req.treeHash)
     m.manifest.encode(state, req.manifest)
-    c.uint.encode(state, req.blobs ? 1 : 0)
+
+    let flags = 0
+    if (req.blobs) flags |= 1
+    c.uint.encode(state, flags)
+
     if (req.blobs === null) return
     c.uint.encode(state, req.blobs.length)
     c.fixed32.encode(state, req.blobs.treeHash)
@@ -44,15 +52,7 @@ const Request = {
     const key = Verifier.manifestHash(manifest)
     const id = HypercoreID.normalize(key)
 
-    const isDrive = state.start !== state.end && c.uint.decode(state) & 1
-    const blobs = isDrive
-      ? {
-          length: c.uint.decode(state),
-          treeHash: c.fixed32.decode(state)
-        }
-      : null
-
-    return {
+    const request = {
       version,
       id,
       key,
@@ -60,9 +60,19 @@ const Request = {
       fork,
       treeHash,
       manifest,
-      isDrive,
-      blobs
+      blobs: null
     }
+
+    const flags = state.start !== state.end ? c.uint.decode(state) : 0
+
+    if (!(flags & 1)) return request
+
+    request.blobs = {
+      length: c.uint.decode(state),
+      treeHash: c.fixed32.decode(state)
+    }
+
+    return request
   }
 }
 
@@ -132,7 +142,7 @@ function signable (pub, req) {
   for (const s of req.manifest.signers) {
     if (s.publicKey.equals(pub)) {
       const signable = caps.treeSignable(v === 0 ? s.namespace : req.key, req.treeHash, req.length, req.fork)
-      if (!req.isDrive) return [signable]
+      if (req.blobs === null) return [signable]
 
       const m = req.manifest
       if (m.version < 1) {
