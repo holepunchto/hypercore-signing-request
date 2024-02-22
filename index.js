@@ -7,7 +7,7 @@ const crypto = require('hypercore-crypto')
 
 const [BLOBS] = crypto.namespace('hyperdrive', 1)
 
-const VERSION = 1
+const VERSION = 2
 const FLAG_DRIVE = 1
 
 const Request = {
