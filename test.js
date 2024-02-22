@@ -24,10 +24,10 @@ test('Can generate and decode a signing request', async t => {
 })
 
 test('Can generate and decode a drive request', async t => {
-  const store = new Corestore(RAM)
+  const store = new Corestore(RAM, { manifestVersion: 1, compat: false })
   await store.ready()
 
-  const drive = new Hyperdrive(store, { compat: false })
+  const drive = new Hyperdrive(store)
   await drive.ready()
 
   await drive.put('./hello.txt', Buffer.from('hello'))

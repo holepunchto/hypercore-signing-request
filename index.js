@@ -16,7 +16,7 @@ const Request = {
     c.uint.preencode(state, req.fork)
     c.fixed32.preencode(state, req.treeHash)
     m.manifest.preencode(state, req.manifest)
-    c.uint8.preencode(state, 0)
+    c.uint.preencode(state, 0)
     if (req.blobs === null) return
     c.uint.preencode(state, req.blobs.length)
     c.fixed32.preencode(state, req.blobs.treeHash)
@@ -44,7 +44,7 @@ const Request = {
     const key = Verifier.manifestHash(manifest)
     const id = HypercoreID.normalize(key)
 
-    const isDrive = state.start !== state.end && c.uint8.decode(state) !== 0
+    const isDrive = state.start !== state.end && c.uint.decode(state) & 1
     const blobs = isDrive
       ? {
           length: c.uint.decode(state),
@@ -96,13 +96,16 @@ async function generateDrive (drive, { length = drive.core.length, fork = drive.
   if (drive.core.core.compat && !manifest) throw new Error('Cannot generate signing requests for compat cores')
 
   if (!manifest) manifest = drive.core.manifest
+  if (manifest < 1) throw new Error('Only v1 manifests are supported')
 
   const last = await drive.db.getBySeq(length - 1)
   const { blockOffset, blockLength } = last.value.blob
 
-  const blobs = { length: blockOffset + blockLength }
-
-  blobs.treeHash = await drive.blobs.core.treeHash(blobs.length)
+  const blobsLength = blockOffset + blockLength
+  const blobs = {
+    length: blobsLength,
+    treeHash: await drive.blobs.core.treeHash(blobsLength)
+  }
 
   return c.encode(Request, {
     version: VERSION,
