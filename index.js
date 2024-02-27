@@ -1,11 +1,9 @@
 const HypercoreID = require('hypercore-id-encoding')
+const Hyperdrive = require('hyperdrive')
 const Verifier = require('hypercore/lib/verifier')
 const caps = require('hypercore/lib/caps')
 const m = require('hypercore/lib/messages')
 const c = require('compact-encoding')
-const crypto = require('hypercore-crypto')
-
-const [BLOBS] = crypto.namespace('hyperdrive', 1)
 
 const VERSION = 2
 const FLAG_DRIVE = 1
@@ -140,25 +138,30 @@ function decode (buffer) {
 
 function signable (pub, req) {
   const v = req.manifest.version
+
   for (const s of req.manifest.signers) {
-    if (s.publicKey.equals(pub)) {
-      const signable = caps.treeSignable(v === 0 ? s.namespace : req.key, req.treeHash, req.length, req.fork)
-      if (req.blobs === null) return [signable]
+    if (!s.publicKey.equals(pub)) continue
 
-      const m = req.manifest
-      if (m.version < 1) {
-        throw new Error('Drive must use v1 manifests')
-      }
+    if (req.blobs) return driveSignable(pub, req)
 
-      const namespace = crypto.hash([BLOBS, req.key, s.namespace])
-      const blobs = caps.treeSignable(namespace, req.treeHash, req.length, req.fork)
-
-      return [
-        signable,
-        blobs
-      ]
-    }
+    const signable = caps.treeSignable(v === 0 ? s.namespace : req.key, req.treeHash, req.length, req.fork)
+    return [signable]
   }
 
   throw new Error('Public key is not a declared signer for this request')
+}
+
+function driveSignable (pub, req) {
+  const contentKey = Hyperdrive.getContentKey(req.manifest)
+  if (!contentKey) {
+    throw new Error('Drive is not compatible, needs v1 manifest')
+  }
+
+  const signable = caps.treeSignable(req.key, req.treeHash, req.length, req.fork)
+  const blobs = caps.treeSignable(contentKey, req.blobs.treeHash, req.blobs.length, req.fork)
+
+  return [
+    signable,
+    blobs
+  ]
 }
