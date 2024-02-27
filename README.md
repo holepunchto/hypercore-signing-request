@@ -16,10 +16,14 @@ const { generate, decode, signable } = require('hypercore-signing-request')
 
 ## API
 
-#### `requestBuffer = await generate(core, { length = core.length })`
+#### `requestBuffer = await generate(coreOrDrive, { length = core.length })`
 
 Generate a signing request, returned as a buffer so it can be shared.
-Only works for non-compat cores (ie manifest backed)
+Only works for non-compat cores (ie manifest backed).
+
+Alternatvely a Hyperdrive can be passed and a joint request for signing both metadata and blob cores will be generated.
+Only works for v1 manifest backed Hyperdrives.
+
 
 #### `req = decode(requestBuffer)`
 
