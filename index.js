@@ -18,9 +18,9 @@ const Request = {
 
     c.uint.preencode(state, 0) // flags
 
-    if (req.blobs) {
-      c.uint.preencode(state, req.blobs.length)
-      c.fixed32.preencode(state, req.blobs.treeHash)
+    if (req.content) {
+      c.uint.preencode(state, req.content.length)
+      c.fixed32.preencode(state, req.content.treeHash)
     }
   },
   encode (state, req) {
@@ -31,12 +31,12 @@ const Request = {
     m.manifest.encode(state, req.manifest)
 
     let flags = 0
-    if (req.blobs) flags |= FLAG_DRIVE
+    if (req.content) flags |= FLAG_DRIVE
     c.uint.encode(state, flags)
 
-    if (req.blobs) {
-      c.uint.encode(state, req.blobs.length)
-      c.fixed32.encode(state, req.blobs.treeHash)
+    if (req.content) {
+      c.uint.encode(state, req.content.length)
+      c.fixed32.encode(state, req.content.treeHash)
     }
   },
   decode (state) {
@@ -53,10 +53,11 @@ const Request = {
 
     const flags = state.start !== state.end ? c.uint.decode(state) : 0
 
-    let blobs = null
+    let content = null
 
-    if (flags & FLAG_DRIVE) {
-      blobs = {
+    const isHyperdrive = flags & FLAG_DRIVE
+    if (isHyperdrive) {
+      content = {
         length: c.uint.decode(state),
         treeHash: c.fixed32.decode(state)
       }
@@ -70,7 +71,8 @@ const Request = {
       fork,
       treeHash,
       manifest,
-      blobs
+      isHyperdrive,
+      content
     }
   }
 }
@@ -97,7 +99,7 @@ async function generate (core, { length = core.length, fork = core.fork, manifes
     fork,
     treeHash: await core.treeHash(length),
     manifest,
-    blobs: null
+    content: null
   })
 }
 
@@ -110,10 +112,10 @@ async function generateDrive (drive, { length = drive.core.length, fork = drive.
   const last = await drive.db.getBySeq(length - 1)
   const { blockOffset, blockLength } = last.value.blob
 
-  const blobsLength = blockOffset + blockLength
-  const blobs = {
-    length: blobsLength,
-    treeHash: await drive.blobs.core.treeHash(blobsLength)
+  const contentLength = blockOffset + blockLength
+  const content = {
+    length: contentLength,
+    treeHash: await drive.blobs.core.treeHash(contentLength)
   }
 
   return c.encode(Request, {
@@ -122,7 +124,7 @@ async function generateDrive (drive, { length = drive.core.length, fork = drive.
     fork,
     treeHash: await drive.core.treeHash(length),
     manifest,
-    blobs
+    content
   })
 }
 
@@ -142,7 +144,7 @@ function signable (pub, req) {
   for (const s of req.manifest.signers) {
     if (!s.publicKey.equals(pub)) continue
 
-    if (req.blobs) return driveSignable(pub, req)
+    if (req.isHyperdrive) return driveSignable(pub, req)
 
     const signable = caps.treeSignable(v === 0 ? s.namespace : req.key, req.treeHash, req.length, req.fork)
     return [signable]
@@ -158,10 +160,10 @@ function driveSignable (pub, req) {
   }
 
   const signable = caps.treeSignable(req.key, req.treeHash, req.length, req.fork)
-  const blobs = caps.treeSignable(contentKey, req.blobs.treeHash, req.blobs.length, req.fork)
+  const content = caps.treeSignable(contentKey, req.content.treeHash, req.content.length, req.fork)
 
   return [
     signable,
-    blobs
+    content
   ]
 }
