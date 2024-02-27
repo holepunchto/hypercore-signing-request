@@ -13,7 +13,7 @@ test('Can generate and decode a signing request', async t => {
   const toSign = await generate(core)
   const decoded = decode(toSign)
 
-  t.is(decoded.version, 2, 'Current version is 1')
+  t.is(decoded.version, 2, 'Current version is corrects')
   t.alike(decoded.key, core.key, 'Currect key')
   t.is(decoded.length, 2, 'Correct length')
   t.is(decoded.fork, 0, 'correct fork')
@@ -36,7 +36,7 @@ test('Can generate and decode a drive request', async t => {
   const toSign = await generate(drive)
   const decoded = decode(toSign)
 
-  t.is(decoded.version, 2, 'Current version is 1')
+  t.is(decoded.version, 2, 'Current version is correct')
   t.alike(decoded.key, drive.core.key, 'Currect key')
   t.is(decoded.length, 3, 'Correct length')
   t.is(decoded.fork, 0, 'correct fork')
