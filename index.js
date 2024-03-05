@@ -90,7 +90,6 @@ async function generate (core, { length = core.length, fork = core.fork, manifes
   if (core.blobs) return generateDrive(core, { length, fork, manifest })
 
   if (core.core.compat && !manifest) throw new Error('Cannot generate signing requests for compat cores')
-  if (core.fork !== fork) throw new Error('Core should have the same fork')
   if (!manifest) manifest = core.manifest
 
   return c.encode(Request, {
