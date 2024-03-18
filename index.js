@@ -108,10 +108,7 @@ async function generateDrive (drive, { length = drive.core.length, fork = drive.
   if (!manifest) manifest = drive.core.manifest
   if (manifest < 1) throw new Error('Only v1 manifests are supported')
 
-  const last = await drive.db.getBySeq(length - 1)
-  const { blockOffset, blockLength } = last.value.blob
-
-  const contentLength = blockOffset + blockLength
+  const contentLength = await drive.getBlobsLength(length)
   const content = {
     length: contentLength,
     treeHash: await drive.blobs.core.treeHash(contentLength)
