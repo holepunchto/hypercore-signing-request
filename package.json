@@ -1,6 +1,6 @@
 {
   "name": "hypercore-signing-request",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "Generate shareable signing requests for Hypercore",
   "main": "index.js",
   "scripts": {
