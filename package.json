@@ -12,8 +12,8 @@
   "dependencies": {
     "compact-encoding": "^2.13.0",
     "hypercore": "^10.32.8",
-    "hyperdrive": "^11.7.0",
-    "hypercore-id-encoding": "^1.2.0"
+    "hypercore-id-encoding": "^1.2.0",
+    "hyperdrive": "^11.8.1"
   },
   "repository": {
     "type": "git",

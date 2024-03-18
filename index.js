@@ -140,19 +140,21 @@ function decode (buffer) {
 function signable (pub, req) {
   const v = req.manifest.version
 
-  for (const s of req.manifest.signers) {
+  for (let signer = 0; signer < req.manifest.signers.length; signer++) {
+    const s = req.manifest.signers[signer]
     if (!s.publicKey.equals(pub)) continue
 
-    if (req.isHyperdrive) return driveSignable(pub, req)
+    if (req.isHyperdrive) return driveSignable(pub, req, signer)
 
     const signable = caps.treeSignable(v === 0 ? s.namespace : req.key, req.treeHash, req.length, req.fork)
-    return [signable]
+
+    return [{ signer, signable }]
   }
 
   throw new Error('Public key is not a declared signer for this request')
 }
 
-function driveSignable (pub, req) {
+function driveSignable (pub, req, signer) {
   const contentKey = Hyperdrive.getContentKey(req.manifest)
   if (!contentKey) {
     throw new Error('Drive is not compatible, needs v1 manifest')
@@ -162,7 +164,7 @@ function driveSignable (pub, req) {
   const content = caps.treeSignable(contentKey, req.content.treeHash, req.content.length, req.fork)
 
   return [
-    signable,
-    content
+    { signer, signable },
+    { signer, signable: content }
   ]
 }
