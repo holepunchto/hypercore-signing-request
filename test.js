@@ -2,11 +2,10 @@ const test = require('brittle')
 const Hypercore = require('hypercore')
 const Corestore = require('corestore')
 const Hyperdrive = require('hyperdrive')
-const RAM = require('random-access-memory')
 const { generate, decode } = require('./index')
 
 test('Can generate and decode a signing request', async t => {
-  const core = new Hypercore(RAM.reusable(), { compat: false })
+  const core = new Hypercore(await t.tmp(), { compat: false })
   await core.append('Block 0')
   await core.append('Block 1')
 
@@ -26,7 +25,7 @@ test('Can generate and decode a signing request', async t => {
 })
 
 test('Can generate and decode a drive request', async t => {
-  const store = new Corestore(RAM, { manifestVersion: 1, compat: false })
+  const store = new Corestore(await t.tmp(), { manifestVersion: 1, compat: false })
   await store.ready()
 
   const drive = new Hyperdrive(store)
