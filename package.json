@@ -13,7 +13,7 @@
     "compact-encoding": "^2.13.0",
     "hypercore": "^11.0.0",
     "hypercore-id-encoding": "^1.2.0",
-    "hyperdrive": "^12.0.0"
+    "hyperdrive": "^13.3.1"
   },
   "repository": {
     "type": "git",
