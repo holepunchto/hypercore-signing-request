@@ -127,6 +127,9 @@ const Response = {
     }
 
     const type = version > COMPAT_VERSION ? c.uint8.decode(state) : RESPONSE
+    if (type !== RESPONSE) {
+      throw new Error('Expected an encoded response')
+    }
 
     return {
       version,
