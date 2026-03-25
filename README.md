@@ -41,6 +41,23 @@ Decode the signing request. Looks like this:
 }
 ```
 
+#### `responseBuffer = encodeResponse(response)`
+
+Encode the signing response. Looks like this:
+
+``` js
+{
+  version, // request version
+  publicKey, // signer public key
+  requestHash, // request hash
+  signatures // array of signatures
+}
+```
+
+#### `res = encodeResponse(responseBuffer)`
+
+Decode the signing response.
+
 #### `buffer = signable(publicKey, req)`
 
 Get the buffer to sign. Pass your public key and it validates that you can sign it.

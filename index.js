@@ -5,12 +5,20 @@ const caps = require('hypercore/lib/caps')
 const m = require('hypercore/lib/messages')
 const c = require('compact-encoding')
 
-const VERSION = 2
+const COMPAT_VERSION = 2
+const MAX_SUPPORTED_VERSION = 3
+
 const FLAG_DRIVE = 1
+const REQUEST = 0
+const RESPONSE = 1
 
 const Request = {
   preencode (state, req) {
     c.uint.preencode(state, req.version)
+    if (req.version > 2) {
+      c.uint8.preencode(state, REQUEST)
+    }
+
     c.uint.preencode(state, req.length)
     c.uint.preencode(state, req.fork)
     c.fixed32.preencode(state, req.treeHash)
@@ -25,6 +33,10 @@ const Request = {
   },
   encode (state, req) {
     c.uint.encode(state, req.version)
+    if (req.version > 2) {
+      c.uint8.encode(state, REQUEST)
+    }
+
     c.uint.encode(state, req.length)
     c.uint.encode(state, req.fork)
     c.fixed32.encode(state, req.treeHash)
@@ -41,7 +53,14 @@ const Request = {
   },
   decode (state) {
     const version = c.uint.decode(state)
-    if (version > VERSION) throw new Error('Unknown signing request version: ' + version)
+    if (version > MAX_SUPPORTED_VERSION) {
+      throw new Error('Unknown signing request version: ' + version)
+    }
+
+    const type = version < COMPAT_VERSION ? REQUEST : c.uint8.decode(state)
+    if (type !== REQUEST) {
+      throw new Error('Expected an encoded request')
+    }
 
     const length = c.uint.decode(state)
     const fork = c.uint.decode(state)
@@ -65,6 +84,7 @@ const Request = {
 
     return {
       version,
+      type,
       id,
       key,
       length,
@@ -77,10 +97,53 @@ const Request = {
   }
 }
 
+const Signatures = c.array(c.fixed64)
+
+const Response = {
+  preencode (state, res) {
+    c.uint.preencode(state, res.version)
+    if (res.version > 2) {
+      c.uint8.preencode(state, RESPONSE)
+    }
+
+    c.fixed32.preencode(state, res.requestHash)
+    c.fixed32.preencode(state, res.publicKey)
+    Signatures.preencode(state, res.signatures)
+  },
+  encode (state, res) {
+    c.uint.encode(state, res.version)
+    if (res.version > 2) {
+      c.uint8.encode(state, RESPONSE)
+    }
+
+    c.fixed32.encode(state, res.requestHash)
+    c.fixed32.encode(state, res.publicKey)
+    Signatures.encode(state, res.signatures)
+  },
+  decode (state, res) {
+    const version = c.uint.decode(state)
+    if (version > MAX_SUPPORTED_VERSION) {
+      throw new Error('Response version is not supported, please upgrade')
+    }
+
+    const type = version > COMPAT_VERSION ? c.uint8.decode(state) : RESPONSE
+
+    return {
+      version,
+      type,
+      requestHash: c.fixed32.decode(state),
+      publicKey: c.fixed32.decode(state),
+      signatures: Signatures.decode(state)
+    }
+  }
+}
+
 module.exports = {
   generate,
   generateDrive,
   decode,
+  encodeResponse,
+  decodeResponse,
   signable
 }
 
@@ -93,7 +156,7 @@ async function generate (core, { length = core.length, fork = core.fork, manifes
   if (!manifest) manifest = core.manifest
 
   return c.encode(Request, {
-    version: VERSION,
+    version: MAX_SUPPORTED_VERSION,
     length,
     fork,
     treeHash: await core.treeHash(length),
@@ -115,7 +178,7 @@ async function generateDrive (drive, { length = drive.core.length, fork = drive.
   }
 
   return c.encode(Request, {
-    version: VERSION,
+    version: MAX_SUPPORTED_VERSION,
     length,
     fork,
     treeHash: await drive.core.treeHash(length),
@@ -132,6 +195,19 @@ function decode (buffer) {
   if (state.start < state.end) throw new Error('Unparsed padding left in request, bailing')
 
   return req
+}
+
+function encodeResponse (res) {
+  return c.encode(Response, res)
+}
+
+function decodeResponse (buffer) {
+  const state = { start: 0, end: buffer.byteLength, buffer }
+  const res = Response.decode(state)
+
+  if (state.start < state.end) throw new Error('Unparsed padding left in request, bailing')
+
+  return res
 }
 
 function signable (pub, req) {
