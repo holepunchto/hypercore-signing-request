@@ -147,7 +147,9 @@ module.exports = {
   decode,
   encodeResponse,
   decodeResponse,
-  signable
+  signable,
+  isRequest,
+  isResponse
 }
 
 async function generate (core, { length = core.length, fork = core.fork, manifest = null } = {}) {
@@ -188,6 +190,26 @@ async function generateDrive (drive, { length = drive.core.length, fork = drive.
     manifest,
     content
   })
+}
+
+function isRequest (buffer) {
+  const state = { start: 0, end: buffer.byteLength, buffer }
+
+  const version = c.uint.decode(state)
+  if (version <= COMPAT_VERSION) return true
+
+  const type = c.uint8.decode(state)
+  return type === REQUEST
+}
+
+function isResponse (buffer) {
+  const state = { start: 0, end: buffer.byteLength, buffer }
+
+  const version = c.uint.decode(state)
+  if (version <= COMPAT_VERSION) return true
+
+  const type = c.uint8.decode(state)
+  return type === RESPONSE
 }
 
 function decode (buffer) {
