@@ -2,7 +2,7 @@ const test = require('brittle')
 const Hypercore = require('hypercore')
 const Corestore = require('corestore')
 const Hyperdrive = require('hyperdrive')
-const { generate, decode, encodeResponse, decodeResponse } = require('./index')
+const { generate, decode, encodeResponse, decodeResponse, isRequest, isResponse } = require('./index')
 
 test('Can generate and decode a signing request', async t => {
   const core = new Hypercore(await t.tmp(), { compat: false })
@@ -100,6 +100,12 @@ test('Request and response encodings', async t => {
 
   t.is(decodedResponseV2.version, 2, 'Response v2 version is correct')
   t.is(decodedResponseV3.version, 3, 'Response v3 version is correct')
+
+  t.ok(isRequest(request))
+  t.absent(isResponse(request))
+
+  t.absent(isRequest(encodedV3))
+  t.ok(isResponse(encodedV3))
 
   await drive.close()
 })
