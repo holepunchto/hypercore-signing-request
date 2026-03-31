@@ -57,7 +57,7 @@ const Request = {
       throw new Error('Unknown signing request version: ' + version)
     }
 
-    const type = version < COMPAT_VERSION ? REQUEST : c.uint8.decode(state)
+    const type = version <= COMPAT_VERSION ? REQUEST : c.uint8.decode(state)
     if (type !== REQUEST) {
       throw new Error('Expected an encoded request')
     }
@@ -126,7 +126,7 @@ const Response = {
       throw new Error('Response version is not supported, please upgrade')
     }
 
-    const type = version > COMPAT_VERSION ? c.uint8.decode(state) : RESPONSE
+    const type = version <= COMPAT_VERSION ? RESPONSE : c.uint8.decode(state)
     if (type !== RESPONSE) {
       throw new Error('Expected an encoded response')
     }
