@@ -4,7 +4,9 @@
   "description": "Generate shareable signing requests for Hypercore",
   "main": "index.js",
   "scripts": {
-    "test": "standard && brittle test.js"
+    "lint": "prettier --check . && lunte",
+    "format": "prettier --write . && lunte --fix",
+    "test": "npm run lint && brittle -c test.js"
   },
   "files": [
     "./index.js"
@@ -13,7 +15,10 @@
     "compact-encoding": "^2.13.0",
     "hypercore": "^11.0.0",
     "hypercore-id-encoding": "^1.2.0",
-    "hyperdrive": "^13.3.1"
+    "hyperdrive": "^13.3.1",
+    "lunte": "^1.6.0",
+    "prettier": "^3.8.1",
+    "prettier-config-holepunch": "^2.0.0"
   },
   "repository": {
     "type": "git",

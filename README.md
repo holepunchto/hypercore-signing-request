@@ -10,7 +10,7 @@ Useful for manual multisig
 
 ## Usage
 
-``` js
+```js
 const { generate, decode, signable } = require('hypercore-signing-request')
 ```
 
@@ -24,20 +24,19 @@ Only works for non-compat cores (ie manifest backed).
 Alternatvely a Hyperdrive can be passed and a joint request for signing both metadata and blob cores will be generated.
 Only works for v1 manifest backed Hyperdrives.
 
-
 #### `req = decode(requestBuffer)`
 
 Decode the signing request. Looks like this:
 
-``` js
+```js
 {
-  version, // request version
-  id, // hypercore id
-  key, // the key as well
-  manifest, // core manifest
-  treeHash, // the tree hash
-  length, // the core length
-  fork // the core fork id
+  ;(version, // request version
+    id, // hypercore id
+    key, // the key as well
+    manifest, // core manifest
+    treeHash, // the tree hash
+    length, // the core length
+    fork) // the core fork id
 }
 ```
 
@@ -45,12 +44,12 @@ Decode the signing request. Looks like this:
 
 Encode the signing response. Looks like this:
 
-``` js
+```js
 {
-  version, // request version
-  publicKey, // signer public key
-  requestHash, // request hash
-  signatures // array of signatures
+  ;(version, // request version
+    publicKey, // signer public key
+    requestHash, // request hash
+    signatures) // array of signatures
 }
 ```
 

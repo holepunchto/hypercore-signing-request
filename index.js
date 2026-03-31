@@ -13,7 +13,7 @@ const REQUEST = 0
 const RESPONSE = 1
 
 const Request = {
-  preencode (state, req) {
+  preencode(state, req) {
     c.uint.preencode(state, req.version)
     if (req.version > 2) {
       c.uint8.preencode(state, REQUEST)
@@ -31,7 +31,7 @@ const Request = {
       c.fixed32.preencode(state, req.content.treeHash)
     }
   },
-  encode (state, req) {
+  encode(state, req) {
     c.uint.encode(state, req.version)
     if (req.version > 2) {
       c.uint8.encode(state, REQUEST)
@@ -51,7 +51,7 @@ const Request = {
       c.fixed32.encode(state, req.content.treeHash)
     }
   },
-  decode (state) {
+  decode(state) {
     const version = c.uint.decode(state)
     if (version > MAX_SUPPORTED_VERSION) {
       throw new Error('Unknown signing request version: ' + version)
@@ -100,7 +100,7 @@ const Request = {
 const Signatures = c.array(c.fixed64)
 
 const Response = {
-  preencode (state, res) {
+  preencode(state, res) {
     c.uint.preencode(state, res.version)
     if (res.version > 2) {
       c.uint8.preencode(state, RESPONSE)
@@ -110,7 +110,7 @@ const Response = {
     c.fixed32.preencode(state, res.publicKey)
     Signatures.preencode(state, res.signatures)
   },
-  encode (state, res) {
+  encode(state, res) {
     c.uint.encode(state, res.version)
     if (res.version > 2) {
       c.uint8.encode(state, RESPONSE)
@@ -120,7 +120,7 @@ const Response = {
     c.fixed32.encode(state, res.publicKey)
     Signatures.encode(state, res.signatures)
   },
-  decode (state, res) {
+  decode(state, res) {
     const version = c.uint.decode(state)
     if (version > MAX_SUPPORTED_VERSION) {
       throw new Error('Response version is not supported, please upgrade')
@@ -152,12 +152,14 @@ module.exports = {
   isResponse
 }
 
-async function generate (core, { length = core.length, fork = core.fork, manifest = null } = {}) {
+async function generate(core, { length = core.length, fork = core.fork, manifest = null } = {}) {
   if (!core.opened) await core.ready()
 
   if (core.blobs) return generateDrive(core, { length, fork, manifest })
 
-  if (core.core.compat && !manifest) throw new Error('Cannot generate signing requests for compat cores')
+  if (core.core.compat && !manifest) {
+    throw new Error('Cannot generate signing requests for compat cores')
+  }
   if (!manifest) manifest = core.manifest
 
   return c.encode(Request, {
@@ -170,8 +172,13 @@ async function generate (core, { length = core.length, fork = core.fork, manifes
   })
 }
 
-async function generateDrive (drive, { length = drive.core.length, fork = drive.core.fork, manifest = null }) {
-  if (drive.core.core.compat && !manifest) throw new Error('Cannot generate signing requests for compat cores')
+async function generateDrive(
+  drive,
+  { length = drive.core.length, fork = drive.core.fork, manifest = null }
+) {
+  if (drive.core.core.compat && !manifest) {
+    throw new Error('Cannot generate signing requests for compat cores')
+  }
 
   if (!manifest) manifest = drive.core.manifest
   if (manifest < 1) throw new Error('Only v1 manifests are supported')
@@ -192,7 +199,7 @@ async function generateDrive (drive, { length = drive.core.length, fork = drive.
   })
 }
 
-function isRequest (buffer) {
+function isRequest(buffer) {
   const state = { start: 0, end: buffer.byteLength, buffer }
 
   const version = c.uint.decode(state)
@@ -202,7 +209,7 @@ function isRequest (buffer) {
   return type === REQUEST
 }
 
-function isResponse (buffer) {
+function isResponse(buffer) {
   const state = { start: 0, end: buffer.byteLength, buffer }
 
   const version = c.uint.decode(state)
@@ -212,7 +219,7 @@ function isResponse (buffer) {
   return type === RESPONSE
 }
 
-function decode (buffer) {
+function decode(buffer) {
   const state = { start: 0, end: buffer.byteLength, buffer }
   const req = Request.decode(state)
 
@@ -222,11 +229,11 @@ function decode (buffer) {
   return req
 }
 
-function encodeResponse (res) {
+function encodeResponse(res) {
   return c.encode(Response, res)
 }
 
-function decodeResponse (buffer) {
+function decodeResponse(buffer) {
   const state = { start: 0, end: buffer.byteLength, buffer }
   const res = Response.decode(state)
 
@@ -235,7 +242,7 @@ function decodeResponse (buffer) {
   return res
 }
 
-function signable (pub, req) {
+function signable(pub, req) {
   const v = req.manifest.version
 
   for (let signer = 0; signer < req.manifest.signers.length; signer++) {
@@ -244,7 +251,12 @@ function signable (pub, req) {
 
     if (req.isHyperdrive) return driveSignable(pub, req, signer)
 
-    const signable = caps.treeSignable(v === 0 ? s.namespace : req.key, req.treeHash, req.length, req.fork)
+    const signable = caps.treeSignable(
+      v === 0 ? s.namespace : req.key,
+      req.treeHash,
+      req.length,
+      req.fork
+    )
 
     return [{ signer, signable }]
   }
@@ -252,7 +264,7 @@ function signable (pub, req) {
   throw new Error('Public key is not a declared signer for this request')
 }
 
-function driveSignable (pub, req, signer) {
+function driveSignable(pub, req, signer) {
   const contentKey = Hyperdrive.getContentKey(req.manifest)
   if (!contentKey) {
     throw new Error('Drive is not compatible, needs v1 manifest')
