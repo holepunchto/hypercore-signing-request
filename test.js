@@ -2,9 +2,16 @@ const test = require('brittle')
 const Hypercore = require('hypercore')
 const Corestore = require('corestore')
 const Hyperdrive = require('hyperdrive')
-const { generate, decode, encodeResponse, decodeResponse, isRequest, isResponse } = require('./index')
+const {
+  generate,
+  decode,
+  encodeResponse,
+  decodeResponse,
+  isRequest,
+  isResponse
+} = require('./index')
 
-test('Can generate and decode a signing request', async t => {
+test('Can generate and decode a signing request', async (t) => {
   const core = new Hypercore(await t.tmp(), { compat: false })
   await core.append('Block 0')
   await core.append('Block 1')
@@ -24,7 +31,7 @@ test('Can generate and decode a signing request', async t => {
   await core.close()
 })
 
-test('Can generate and decode a drive request', async t => {
+test('Can generate and decode a drive request', async (t) => {
   const store = new Corestore(await t.tmp(), { manifestVersion: 1, compat: false })
   await store.ready()
 
@@ -52,7 +59,7 @@ test('Can generate and decode a drive request', async t => {
   await drive.close()
 })
 
-test('Request and response encodings', async t => {
+test('Request and response encodings', async (t) => {
   const store = new Corestore(await t.tmp(), { manifestVersion: 1, compat: false })
   await store.ready()
 
@@ -68,10 +75,7 @@ test('Request and response encodings', async t => {
     version: 3,
     publicKey: Buffer.alloc(32, 1),
     requestHash: Buffer.alloc(32, 2),
-    signatures: [
-      Buffer.alloc(64, 1),
-      Buffer.alloc(64, 2)
-    ]
+    signatures: [Buffer.alloc(64, 1), Buffer.alloc(64, 2)]
   }
 
   const encodedV3 = encodeResponse(response)
