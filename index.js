@@ -152,16 +152,16 @@ module.exports = {
   isResponse
 }
 
-async function generate (core, { length = core.length, fork = core.fork, manifest = null, version = MAX_SUPPORTED_VERSION } = {}) {
+async function generate (core, { length = core.length, fork = core.fork, manifest = null, legacy = false } = {}) {
   if (!core.opened) await core.ready()
 
-  if (core.blobs) return generateDrive(core, { length, fork, manifest })
+  if (core.blobs) return generateDrive(core, { length, fork, manifest, legacy })
 
   if (core.core.compat && !manifest) throw new Error('Cannot generate signing requests for compat cores')
   if (!manifest) manifest = core.manifest
 
   return c.encode(Request, {
-    version,
+    version: legacy ? COMPAT_VERSION : MAX_SUPPORTED_VERSION,
     length,
     fork,
     treeHash: await core.treeHash(length),
@@ -170,7 +170,7 @@ async function generate (core, { length = core.length, fork = core.fork, manifes
   })
 }
 
-async function generateDrive (drive, { length = drive.core.length, fork = drive.core.fork, manifest = null, version = MAX_SUPPORTED_VERSION }) {
+async function generateDrive (drive, { length = drive.core.length, fork = drive.core.fork, manifest = null, legacy = false }) {
   if (drive.core.core.compat && !manifest) throw new Error('Cannot generate signing requests for compat cores')
 
   if (!manifest) manifest = drive.core.manifest
@@ -183,7 +183,7 @@ async function generateDrive (drive, { length = drive.core.length, fork = drive.
   }
 
   return c.encode(Request, {
-    version,
+    version: legacy ? COMPAT_VERSION : MAX_SUPPORTED_VERSION,
     length,
     fork,
     treeHash: await drive.core.treeHash(length),
