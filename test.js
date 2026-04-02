@@ -21,6 +21,19 @@ test('Can generate and decode a signing request', async t => {
   t.absent(decoded.isHyperdrive)
   t.is(decoded.content, null)
 
+  t.ok(isRequest(toSign))
+
+  const legacySign = await generate(core, { legacy: true })
+  const legacy = decode(legacySign)
+
+  t.is(legacy.version, 2, 'Current version is correct')
+  t.alike(legacy.key, core.key, 'Currect key')
+  t.is(legacy.length, 2, 'Correct length')
+  t.is(legacy.fork, 0, 'correct fork')
+  t.alike(legacy.treeHash, await core.treeHash(2), 'Correct treeHash')
+  t.alike(legacy.manifest, core.manifest, 'Correct manifest')
+  t.absent(legacy.isHyperdrive)
+
   await core.close()
 })
 
@@ -44,10 +57,27 @@ test('Can generate and decode a drive request', async t => {
   t.alike(decoded.treeHash, await drive.core.treeHash(3), 'Correct treeHash')
   t.alike(decoded.manifest, drive.core.manifest, 'Correct manifest')
 
+  t.ok(isRequest(toSign))
+
   t.ok(decoded.isHyperdrive)
   t.ok(decoded.content)
   t.is(decoded.content.length, drive.blobs.core.length)
   t.alike(decoded.content.treeHash, await drive.blobs.core.treeHash())
+
+  const legacySign = await generate(drive, { legacy: true })
+  const legacy = decode(legacySign)
+
+  t.is(legacy.version, 2, 'Current version is correct')
+  t.alike(legacy.key, drive.core.key, 'Currect key')
+  t.is(legacy.length, 3, 'Correct length')
+  t.is(legacy.fork, 0, 'correct fork')
+  t.alike(legacy.treeHash, await drive.core.treeHash(3), 'Correct treeHash')
+  t.alike(legacy.manifest, drive.core.manifest, 'Correct manifest')
+
+  t.ok(legacy.isHyperdrive)
+  t.ok(legacy.content)
+  t.is(legacy.content.length, drive.blobs.core.length)
+  t.alike(legacy.content.treeHash, await drive.blobs.core.treeHash())
 
   await drive.close()
 })
