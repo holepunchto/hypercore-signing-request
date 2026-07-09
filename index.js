@@ -170,13 +170,13 @@ async function generate (core, { length = core.length, fork = core.fork, manifes
   })
 }
 
-async function generateDrive (drive, { length = drive.core.length, fork = drive.core.fork, manifest = null, legacy = false }) {
+async function generateDrive (drive, { length = drive.core.length, fork = drive.core.fork, manifest = null, legacy = false, blobsLength }) {
   if (drive.core.core.compat && !manifest) throw new Error('Cannot generate signing requests for compat cores')
 
   if (!manifest) manifest = drive.core.manifest
   if (manifest < 1) throw new Error('Only v1 manifests are supported')
 
-  const contentLength = await drive.getBlobsLength(length)
+  const contentLength = blobsLength ?? await drive.getBlobsLength(length)
   const content = {
     length: contentLength,
     treeHash: await drive.blobs.core.treeHash(contentLength)
