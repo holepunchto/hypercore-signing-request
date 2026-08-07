@@ -4,13 +4,13 @@
   "description": "Generate shareable signing requests for Hypercore",
   "main": "index.js",
   "scripts": {
-    "test": "standard && brittle test.js"
+    "test": "standard && brittle-node test.js"
   },
   "files": [
     "./index.js"
   ],
   "dependencies": {
-    "compact-encoding": "^2.13.0",
+    "compact-encoding": "^3.3.0",
     "hypercore": "^11.0.0",
     "hypercore-id-encoding": "^1.2.0",
     "hyperdrive": "^13.3.1"
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/holepunchto/hypercore-signing-request",
   "devDependencies": {
-    "brittle": "^3.4.0",
+    "brittle": "^4.1.0",
     "corestore": "^7.0.0",
     "standard": "^17.1.0"
   }
